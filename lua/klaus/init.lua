@@ -1,7 +1,7 @@
-require("theprimeagen.set")
-require("theprimeagen.remap")
+require("klaus.set")
+require("klaus.remap")
 
-require("theprimeagen.lazy_init")
+require("klaus.lazy_init")
 
 vim.opt.clipboard = "unnamedplus"
 -- DO.not
