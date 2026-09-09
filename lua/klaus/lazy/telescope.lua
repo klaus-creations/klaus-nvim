@@ -1,15 +1,13 @@
 return {
-    "nvim-telescope/telescope.nvim",
-
-    tag = "0.1.5",
-
+    'nvim-telescope/telescope.nvim',
+    version = '*',  -- This grabs the latest release (v0.2.1 right now)
     dependencies = {
-        "nvim-lua/plenary.nvim"
+        'nvim-lua/plenary.nvim',
+        -- optional but highly recommended for much faster fuzzy sorting
+        { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
     },
-
     config = function()
         require('telescope').setup({})
-
         local builtin = require('telescope.builtin')
         vim.keymap.set('n', '<leader>pf', builtin.find_files, {})
         vim.keymap.set('n', '<C-p>', builtin.git_files, {})
@@ -27,4 +25,3 @@ return {
         vim.keymap.set('n', '<leader>vh', builtin.help_tags, {})
     end
 }
-
