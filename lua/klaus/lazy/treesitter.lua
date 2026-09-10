@@ -1,56 +1,57 @@
 return {
   "nvim-treesitter/nvim-treesitter",
+  branch = "main",
+  lazy = false,
   build = ":TSUpdate",
   config = function()
-    require("nvim-treesitter.config").setup({
-      ensure_installed = {
-        "vimdoc",
-        "javascript",
-        "typescript",
-        "c",
-        "lua",
-        "rust",
-        "jsdoc",
-        "bash",
-        "css",
-        "html",
-      },
-      sync_install = false,
-      auto_install = true,
-      indent = { enable = true },
-      highlight = {
-        enable = true,
-        additional_vim_regex_highlighting = { "markdown" },
-      },
-    })
+    require("nvim-treesitter").setup()
 
-    -- Register custom parsers (new style)
-    local parsers = require("nvim-treesitter.parsers")
-
-    -- templ
-    parsers.templ = {
-      install_info = {
-        url = "https://github.com/vrischmann/tree-sitter-templ.git",
-        files = { "src/parser.c", "src/scanner.c" },
-        branch = "master",
-      },
+    local ensure_installed = {
+      "vimdoc",
+      "javascript",
+      "typescript",
+      "tsx",
+      "c",
+      "lua",
+      "rust",
+      "jsdoc",
+      "bash",
+      "css",
+      "html",
+      "json",
+      "prisma",
+      "templ",
     }
 
-    -- prisma (community parser)
-    parsers.prisma = {
-      install_info = {
-        url = "https://github.com/victorhqc/tree-sitter-prisma.git",
-        files = { "src/parser.c" },
-      },
-    }
+    -- Install any parsers we don't have yet (async, one-time).
+    local installed = require("nvim-treesitter.config").get_installed("parsers")
+    local missing = vim.tbl_filter(function(lang)
+      return not vim.tbl_contains(installed, lang)
+    end, ensure_installed)
+    if #missing > 0 then
+      require("nvim-treesitter").install(missing)
+    end
 
-    vim.treesitter.language.register("templ", "templ")
-    vim.treesitter.language.register("prisma", "prisma")
+    -- The main branch does not start highlighting for us; do it per buffer.
+    local function start(buf)
+      local lang = vim.treesitter.language.get_lang(vim.bo[buf].filetype)
+      if not lang or not pcall(vim.treesitter.start, buf, lang) then
+        return
+      end
+      vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+    end
 
-    vim.filetype.add({
-      extension = {
-        prisma = "prisma",
-      },
+    vim.api.nvim_create_autocmd("FileType", {
+      callback = function(args)
+        start(args.buf)
+      end,
     })
+
+    -- Buffers already open when lazy.nvim loaded us.
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(buf) then
+        start(buf)
+      end
+    end
   end,
 }
